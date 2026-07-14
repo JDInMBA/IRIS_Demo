@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRIS — Investor Intelligence Layer (Demo)</title>
+<style>
+  :root{
+    --green:#00563F; --green-d:#003D2C; --green-l:#0B7A5C; --mint:#E6F3EE; --mint-2:#D2E9E0;
+    --amber:#B7791F; --amber-bg:#FDF3E3; --red:#C0392B; --red-bg:#FBEAE7;
+    --blue:#1F5FA8; --blue-bg:#E8F0FA;
+    --ink:#15201C; --sub:#5C6B65; --line:#E2EAE6; --bg:#F4F7F6; --card:#FFFFFF;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;}
+  body{background:var(--bg);color:var(--ink);font-size:14px;}
+
+  /* ---------- top bar ---------- */
+  .topbar{background:linear-gradient(90deg,var(--green-d),var(--green) 55%,#0A6B4F);color:#fff;
+    display:flex;align-items:center;gap:18px;padding:0 24px;height:58px;position:sticky;top:0;z-index:50;
+    box-shadow:0 2px 10px rgba(0,60,40,.25);}
+  .logo{display:flex;align-items:baseline;gap:10px;}
+  .logo b{font-size:21px;letter-spacing:3px;font-weight:800;}
+  .logo span{font-size:11.5px;opacity:.85;letter-spacing:.4px;}
+  .demo-badge{background:#FFC53D;color:#4A3200;font-weight:700;font-size:11px;letter-spacing:1px;
+    padding:4px 12px;border-radius:20px;text-transform:uppercase;}
+  .topbar .spacer{flex:1;}
+  .top-meta{font-size:11.5px;opacity:.85;text-align:right;line-height:1.5;}
+  .avatar{width:34px;height:34px;border-radius:50%;background:#FFC53D;color:#4A3200;font-weight:800;
+    display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid rgba(255,255,255,.6);}
+
+  .banner{background:#FFF6DE;border-bottom:1px solid #F0DFAE;color:#6B4E00;font-size:12px;
+    padding:7px 24px;text-align:center;font-weight:600;}
+
+  /* ---------- layout ---------- */
+  .wrap{display:grid;grid-template-columns:300px 1fr;gap:20px;padding:20px 24px;max-width:1440px;margin:0 auto;}
+
+  /* ---------- sidebar ---------- */
+  .side{display:flex;flex-direction:column;gap:14px;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;
+    box-shadow:0 1px 3px rgba(21,32,28,.05);}
+  .panel h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--sub);margin-bottom:10px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:11.5px;font-weight:600;color:var(--sub);margin-bottom:5px;}
+  select,input[type=search]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+    background:#fff;font-size:13px;color:var(--ink);outline:none;}
+  select:focus,input:focus{border-color:var(--green-l);box-shadow:0 0 0 3px rgba(11,122,92,.12);}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{padding:5px 10px;border-radius:16px;border:1px solid var(--line);font-size:11.5px;cursor:pointer;
+    background:#fff;color:var(--sub);user-select:none;transition:.15s;}
+  .chip.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:600;}
+
+  .inv-list{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;}
+  .inv-card{border:1px solid var(--line);border-radius:10px;padding:11px 12px;cursor:pointer;background:#fff;transition:.15s;}
+  .inv-card:hover{border-color:var(--green-l);}
+  .inv-card.sel{border-color:var(--green);background:var(--mint);box-shadow:inset 3px 0 0 var(--green);}
+  .inv-card .nm{font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;}
+  .inv-card .meta{font-size:11.5px;color:var(--sub);margin-top:3px;display:flex;justify-content:space-between;}
+  .pill{font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;white-space:nowrap;}
+  .pill.s3{background:var(--blue-bg);color:var(--blue);}
+  .pill.s4{background:var(--mint);color:var(--green);}
+  .pill.s5{background:var(--amber-bg);color:var(--amber);}
+  .pill.s6{background:#EFE6FA;color:#6B3FA0;}
+  .pill.s2{background:#EEF1F4;color:#556;}
+  .pill.s7{background:var(--green);color:#fff;}
+
+  /* ---------- main ---------- */
+  .main{display:flex;flex-direction:column;gap:16px;}
+  .head-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+    box-shadow:0 1px 3px rgba(21,32,28,.05);}
+  .head-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .head-top h1{font-size:21px;font-weight:800;}
+  .tag{font-size:11px;font-weight:700;padding:4px 10px;border-radius:14px;background:var(--mint);color:var(--green);}
+  .tag.grey{background:#EEF1F4;color:#556;}
+  .head-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;}
+  .kpi{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;}
+  .kpi .v{font-size:19px;font-weight:800;color:var(--green);}
+  .kpi .l{font-size:11px;color:var(--sub);margin-top:2px;}
+
+  /* stage tracker */
+  .stages{display:flex;gap:6px;margin-top:18px;}
+  .stage{flex:1;text-align:center;position:relative;}
+  .stage .bar{height:7px;border-radius:4px;background:var(--mint-2);}
+  .stage.done .bar{background:var(--green-l);}
+  .stage.cur .bar{background:var(--green);box-shadow:0 0 0 3px rgba(0,86,63,.18);}
+  .stage .sl{font-size:10px;color:var(--sub);margin-top:6px;line-height:1.25;}
+  .stage.cur .sl{color:var(--green);font-weight:700;}
+
+  .grid-2{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;
+    box-shadow:0 1px 3px rgba(21,32,28,.05);}
+  .card h2{font-size:13px;font-weight:800;letter-spacing:.3px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--green);}
+
+  /* prediction */
+  .pred{display:flex;gap:20px;align-items:center;}
+  .donut{width:128px;height:128px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;position:relative;}
+  .donut .hole{width:92px;height:92px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .donut .hole b{font-size:24px;color:var(--green);}
+  .donut .hole span{font-size:10px;color:var(--sub);}
+  .pred-txt .st{font-size:17px;font-weight:800;color:var(--green);}
+  .pred-txt p{font-size:12.5px;color:var(--sub);margin-top:6px;line-height:1.55;}
+  .trend{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;font-weight:700;color:var(--green-l);}
+
+  /* agent bars */
+  .abar{display:grid;grid-template-columns:150px 1fr 34px;align-items:center;gap:10px;margin-bottom:9px;}
+  .abar .an{font-size:12px;color:var(--ink);font-weight:600;}
+  .abar .tr{height:8px;background:var(--bg);border-radius:5px;overflow:hidden;}
+  .abar .fl{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green-l),var(--green));}
+  .abar .fl.low{background:linear-gradient(90deg,#E3B04B,var(--amber));}
+  .abar .fl.neg{background:linear-gradient(90deg,#E08E82,var(--red));}
+  .abar .av{font-size:12px;font-weight:800;text-align:right;color:var(--sub);}
+
+  /* reasoning */
+  .why{list-style:none;}
+  .why li{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:12.8px;line-height:1.5;}
+  .why li:last-child{border-bottom:none;}
+  .imp{flex:none;font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;height:fit-content;margin-top:1px;}
+  .imp.pos{background:var(--mint);color:var(--green);}
+  .imp.neg{background:var(--red-bg);color:var(--red);}
+  .imp.neu{background:#EEF1F4;color:#556;}
+
+  /* risks */
+  .risk{display:flex;gap:10px;padding:10px 12px;border-radius:9px;margin-bottom:8px;font-size:12.5px;line-height:1.45;}
+  .risk.hi{background:var(--red-bg);border:1px solid #F0CDC7;}
+  .risk.md{background:var(--amber-bg);border:1px solid #EFDDBB;}
+  .risk .rl{flex:none;font-size:10px;font-weight:800;padding:2px 8px;border-radius:9px;height:fit-content;margin-top:2px;}
+  .risk.hi .rl{background:var(--red);color:#fff;}
+  .risk.md .rl{background:var(--amber);color:#fff;}
+
+  /* actions */
+  .act{display:flex;gap:11px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:12.8px;line-height:1.5;}
+  .act:last-child{border-bottom:none;}
+  .act .n{flex:none;width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;
+    font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+
+  /* action plan */
+  .plan-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .plan-head p{font-size:12px;color:var(--sub);}
+  .plan-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  .plan-item{border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;
+    padding:12px 14px;background:#fff;display:flex;flex-direction:column;gap:7px;}
+  .plan-item.risk-driven{border-left-color:var(--red);}
+  .plan-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .pri{font-size:10px;font-weight:800;padding:3px 9px;border-radius:10px;letter-spacing:.5px;}
+  .pri.p1{background:var(--green);color:#fff;}
+  .pri.p2{background:var(--mint);color:var(--green);}
+  .pri.p3{background:#EEF1F4;color:#556;}
+  .src{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;}
+  .src.an{background:var(--blue-bg);color:var(--blue);}
+  .src.rk{background:var(--red-bg);color:var(--red);}
+  .plan-when{margin-left:auto;font-size:11px;font-weight:700;color:var(--sub);}
+  .plan-act{font-size:12.8px;line-height:1.5;}
+  .plan-imp{font-size:11.5px;color:var(--green);font-style:italic;border-top:1px dashed var(--line);padding-top:6px;}
+  @media(max-width:1100px){.plan-grid{grid-template-columns:1fr}}
+
+  /* peers table */
+  table{width:100%;border-collapse:collapse;font-size:12.3px;}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--sub);
+    padding:7px 8px;border-bottom:2px solid var(--line);}
+  td{padding:8px;border-bottom:1px solid var(--line);}
+  tr:last-child td{border-bottom:none;}
+  td b{color:var(--green);}
+
+  /* meeting notes */
+  .note{border-left:3px solid var(--green-l);background:var(--bg);border-radius:0 9px 9px 0;
+    padding:10px 13px;margin-bottom:9px;font-size:12.5px;line-height:1.5;}
+  .note .nd{font-size:10.5px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}
+
+  .foot{padding:14px 24px 26px;text-align:center;font-size:11px;color:var(--sub);}
+  .empty{padding:36px;text-align:center;color:var(--sub);font-size:13px;}
+  @media(max-width:1100px){.wrap{grid-template-columns:1fr}.grid-2,.grid-3{grid-template-columns:1fr}.head-kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><b>IRIS</b><span>Investor Intelligence Layer &nbsp;·&nbsp; Client &amp; Product Solutions</span></div>
+  <span class="demo-badge">Demo Environment</span>
+  <div class="spacer"></div>
+  <div class="top-meta">Model run: today 09:00 IST<br>IESM v3 · 5 agents active</div>
+  <div class="avatar">JD</div>
+</div>
+<div class="banner">⚠ All names, figures and records on this screen are synthetic demonstration data (multiples of 9). No confidential client information is shown.</div>
+
+<div class="wrap">
+
+  <!-- ================= SIDEBAR ================= -->
+  <div class="side">
+    <div class="panel">
+      <h3>Filters</h3>
+      <div class="field">
+        <label>Search investor</label>
+        <input type="search" id="q" placeholder="Type a name…">
+      </div>
+      <div class="field">
+        <label>Investor segment</label>
+        <select id="fSeg">
+          <option value="all">All segments</option>
+          <option>Institutional</option>
+          <option>Wealth House</option>
+          <option>New Prospect</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>IESM stage</label>
+        <div class="chips" id="fStage">
+          <span class="chip on" data-s="all">All</span>
+          <span class="chip" data-s="2">2</span>
+          <span class="chip" data-s="3">3</span>
+          <span class="chip" data-s="4">4</span>
+          <span class="chip" data-s="5">5</span>
+          <span class="chip" data-s="6">6</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Momentum</label>
+        <select id="fMom">
+          <option value="all">All</option>
+          <option>Accelerating</option>
+          <option>Steady</option>
+          <option>Cooling</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Investors (<span id="cnt"></span>)</h3>
+      <div class="inv-list" id="list"></div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main" id="main"></div>
+</div>
+
+<div class="foot">IRIS · Investor Relationship Intelligence System — demonstration build for academic presentation.<br>
+Synthetic data only. Built with Python, SQL and ML agents; surfaced via web and BI dashboards.</div>
+
+<script>
+const STAGES = ["Awareness","Initial Engagement","Active Exploration","Deep Due Diligence","Negotiation","Commitment Pending","Closed / Active"];
+
+const INVESTORS = [
+ {
+  id:1, name:"Demo Investor 1", seg:"Institutional", region:"North America", stage:4, conf:99, mom:"Accelerating",
+  aum:"$9,999 M", commit:"$999 M", meets:27, last:9,
+  agents:[["Meeting History",99],["Prior Commitments",90],["Digital Engagement",81],["Relationship Dynamics",81],["External News & Market",63]],
+  why:[
+   ["pos","Meeting frequency rose from 9 to 18 per quarter; last 9 meetings included the CIO office."],
+   ["pos","Prior commitments across 9 funds totalling $999 M with zero withdrawals."],
+   ["pos","Sustained engagement with credit fund documentation for 90 consecutive days."],
+   ["neu","External news flow neutral; no governance or regulatory events detected in last 90 days."]
+  ],
+  risks:[
+   ["md","Legal review of side letter terms has been open for 45 days, which is 27 days above the segment median."],
+  ],
+  plan:[
+   {p:"P1",src:"Analysis",t:"Within 9 days",a:"Schedule the fee structure discussion while engagement momentum holds — all leading signals point to Stage 5 readiness.",i:"Expected: entry to Stage 5 (Negotiation); peers with this pattern advanced in 90% of cases."},
+   {p:"P1",src:"Risk",t:"Within 9 days",a:"Escalate the side letter legal review, open for 45 days (27 days above segment median), before it becomes a stage blocker.",i:"Expected: removes the single flagged blocker to progression."},
+   {p:"P2",src:"Analysis",t:"Next 18 days",a:"Send the risk parameter annexe to the CIO office directly; the relationship dynamics agent shows decision makers now read materials themselves.",i:"Expected: seniority signal strengthens from 81 towards 90+."},
+   {p:"P3",src:"Analysis",t:"Before next meeting",a:"Prepare the peer benchmark pack — 9 similar institutions closed after this exact stage pattern.",i:"Expected: supports the negotiation conversation with evidence."}
+  ],
+  peers:[
+   ["Peer A (Institutional)","Closed / Active","81%","270 days"],
+   ["Peer B (Institutional)","Closed / Active","90%","180 days"],
+   ["Peer C (Institutional)","Negotiation","72%","—"]
+  ],
+  notes:[
+   ["Meeting · 9 days ago","Discussed fund performance over the last 9 quarters. Counterparty asked detailed questions on fee tiers and co-investment rights — classic stage 5 entry behaviour."],
+   ["Meeting · 27 days ago","Due diligence workshop. Their risk team requested 9 additional data points on portfolio concentration; all delivered within SLA."]
+  ]
+ },
+ {
+  id:2, name:"Demo Investor 2", seg:"Wealth House", region:"Europe", stage:5, conf:90, mom:"Steady",
+  aum:"$999 M", commit:"$99 M", meets:18, last:18,
+  agents:[["Prior Commitments",90],["Digital Engagement",81],["Meeting History",81],["Relationship Dynamics",63],["External News & Market",54]],
+  why:[
+   ["pos","Negotiation on distribution fee split active; 9 term items agreed out of 12."],
+   ["pos","End-client demand proxy (platform views) steady at 900 views per month."],
+   ["neg","Response time to emails lengthened from 9 hours to 27 hours over the last 3 weeks."],
+   ["neu","No adverse external signals on the firm or its parent group."]
+  ],
+  risks:[
+   ["md","The relationship dynamics agent flags a mild cooling pattern — response latency up 3x in 21 days."],
+   ["md","A competing product launch was detected in their platform lineup 18 days ago."]
+  ],
+  plan:[
+   {p:"P1",src:"Risk",t:"Within 9 days",a:"Bring the remaining 3 term items to a single closing call — response latency has tripled, so sequential emails risk further drift.",i:"Expected: counters the cooling pattern and compresses time to close."},
+   {p:"P1",src:"Risk",t:"Within 9 days",a:"Assess the competing product detected on their platform 18 days ago and prepare a positioning note for the closing call.",i:"Expected: neutralises the main external threat to the deal."},
+   {p:"P2",src:"Analysis",t:"Next 18 days",a:"Offer the quarterly product webinar for their advisers — peer wealth houses converted 90% faster with adviser enablement.",i:"Expected: lifts end-client demand proxy above 900 views per month."},
+   {p:"P3",src:"Analysis",t:"Before launch window",a:"Re-confirm the launch window; their platform onboarding cycle runs in 9-week batches and the next one is close.",i:"Expected: avoids a full-cycle (9 week) delay in going live."}
+  ],
+  peers:[
+   ["Peer D (Wealth House)","Closed / Active","90%","90 days"],
+   ["Peer E (Wealth House)","Closed / Active","81%","117 days"],
+   ["Peer F (Wealth House)","Commitment Pending","72%","—"]
+  ],
+  notes:[
+   ["Call · 18 days ago","Fee split counter-proposal received. Their product committee meets every 9th week; next window is close."],
+   ["Meeting · 36 days ago","Platform integration review completed. IT sign-off obtained; 9 advisers attended the product session."]
+  ]
+ },
+ {
+  id:3, name:"Demo Investor 3", seg:"New Prospect", region:"Asia Pacific", stage:2, conf:81, mom:"Accelerating",
+  aum:"$99 M", commit:"—", meets:9, last:9,
+  agents:[["Digital Engagement",90],["External News & Market",72],["Meeting History",63],["Relationship Dynamics",54],["Prior Commitments",9]],
+  why:[
+   ["pos","Website activity jumped 9x after the introductory call — 99 page views across credit strategy pages."],
+   ["pos","Downloaded 9 fact sheets in the last 18 days, all in one strategy family."],
+   ["neu","No commitment history exists yet — model weights shift to behavioural and external signals for new prospects."],
+   ["pos","External news: firm announced a new alternatives allocation mandate 27 days ago."]
+  ],
+  risks:[
+   ["md","Single point of contact so far; the relationship dynamics agent has only analyst-level engagement to read."]
+  ],
+  plan:[
+   {p:"P1",src:"Analysis",t:"Within 9 days",a:"Propose an introductory portfolio construction session — new prospects with this signal pattern advanced to Stage 3 in 90% of peer cases.",i:"Expected: entry to Stage 3 (Active Exploration)."},
+   {p:"P2",src:"Risk",t:"Next 18 days",a:"Broaden contact beyond the single analyst; request a meeting including their allocation decision maker.",i:"Expected: seniority signal gains an anchor, reducing single-contact risk."},
+   {p:"P2",src:"Analysis",t:"Next 18 days",a:"Send the alternatives primer pack matched to the strategy family they are already reading (99 page views in 18 days).",i:"Expected: sustains the 9x website activity spike."},
+   {p:"P3",src:"Analysis",t:"Next 27 days",a:"Track their new alternatives allocation mandate announced 27 days ago and align the proposal to it.",i:"Expected: positions the firm for the mandate's first allocation round."}
+  ],
+  peers:[
+   ["Peer G (New Prospect)","Active Exploration","81%","—"],
+   ["Peer H (New Prospect)","Closed / Active","72%","360 days"],
+   ["Peer I (New Prospect)","Initial Engagement","63%","—"]
+  ],
+  notes:[
+   ["Call · 9 days ago","Introductory call with investment analyst. Strong interest in private credit; asked for performance history over 9 years."]
+  ]
+ },
+ {
+  id:4, name:"Demo Investor 4", seg:"Institutional", region:"North America", stage:6, conf:99, mom:"Steady",
+  aum:"$99,999 M", commit:"$9,999 M", meets:36, last:9,
+  agents:[["Prior Commitments",99],["Meeting History",99],["Relationship Dynamics",90],["Digital Engagement",81],["External News & Market",81]],
+  why:[
+   ["pos","Soft commitment of $9,999 M confirmed in writing; documentation 90% complete."],
+   ["pos","All 9 diligence workstreams closed; legal is the only open item."],
+   ["pos","Board-level attendees in each of the last 9 meetings."],
+   ["neu","Digital engagement naturally declining as the deal moves off-platform to legal channels."]
+  ],
+  risks:[
+   ["hi","Signature deadline in 9 days; any slip pushes closing into the next quarter."],
+  ],
+  plan:[
+   {p:"P1",src:"Risk",t:"Daily, next 9 days",a:"Daily check-in with legal counsel until signature — the deadline is in 9 days and any slip pushes closing into the next quarter.",i:"Expected: protects the target close date."},
+   {p:"P1",src:"Analysis",t:"Within 9 days",a:"Pre-book the onboarding and capital call sequence so funding follows signature within 9 days.",i:"Expected: zero idle time between signature and funding."},
+   {p:"P2",src:"Risk",t:"This week",a:"Prepare a fallback timeline and communication plan in case signature slips past the deadline.",i:"Expected: keeps stakeholders aligned under the downside scenario."},
+   {p:"P3",src:"Analysis",t:"Next 90 days",a:"Draft the relationship expansion plan; peers of this profile added a second strategy within 270 days of closing.",i:"Expected: positions the account for cross-sell after close."}
+  ],
+  peers:[
+   ["Peer J (Institutional)","Closed / Active","99%","99 days"],
+   ["Peer K (Institutional)","Closed / Active","90%","135 days"],
+   ["Peer L (Institutional)","Closed / Active","90%","171 days"]
+  ],
+  notes:[
+   ["Meeting · 9 days ago","Final terms walkthrough with board representatives. No open commercial items; legal drafting in progress."],
+   ["Meeting · 18 days ago","Commitment size confirmed at $9,999 M across two vehicles."]
+  ]
+ },
+ {
+  id:5, name:"Demo Investor 5", seg:"Wealth House", region:"Middle East", stage:3, conf:72, mom:"Cooling",
+  aum:"$9,999 M", commit:"$9 M", meets:18, last:54,
+  agents:[["Prior Commitments",72],["Meeting History",63],["External News & Market",63],["Digital Engagement",45],["Relationship Dynamics",27]],
+  why:[
+   ["neg","No meetings in the last 54 days versus a prior cadence of one every 18 days."],
+   ["neg","The relationship dynamics agent detects a cooling pattern — outbound messages unanswered for 27 days."],
+   ["pos","Historical relationship is healthy: $9 M pilot allocation performing above benchmark."],
+   ["neu","External news shows an internal reorganisation announced 45 days ago, a likely cause of the pause."]
+  ],
+  risks:[
+   ["hi","Relationship at risk of silent stall — CRM still shows 'Active Exploration' but live signals disagree."],
+   ["md","Key champion may have moved roles in the reorganisation; relationship signal lost its anchor contact."]
+  ],
+  plan:[
+   {p:"P1",src:"Risk",t:"Within 9 days",a:"Re-establish contact through the regional head — the previous champion likely moved roles in the reorganisation 45 days ago.",i:"Expected: restores a valid seniority anchor for the relationship."},
+   {p:"P1",src:"Risk",t:"9-day checkpoint",a:"Set a 9-day response review: if outreach stays unanswered, trigger the structured re-engagement campaign.",i:"Expected: prevents a silent stall from becoming a dormant account."},
+   {p:"P2",src:"Analysis",t:"With first outreach",a:"Lead with the pilot allocation performance note — the $9 M pilot is above benchmark and is the strongest live asset in this relationship.",i:"Expected: reopens dialogue on proven results rather than a sales ask."},
+   {p:"P3",src:"Analysis",t:"Ongoing",a:"Monitor reorganisation news to map the new decision structure before proposing next steps.",i:"Expected: outreach lands with the right people post-reorg."}
+  ],
+  peers:[
+   ["Peer M (Wealth House)","Re-engaged → Closed","72%","243 days"],
+   ["Peer N (Wealth House)","Dormant","45%","—"],
+   ["Peer O (Wealth House)","Re-engaged → Negotiation","63%","—"]
+  ],
+  notes:[
+   ["Meeting · 54 days ago","Product deep-dive went well; agreed to reconvene after their internal review. No contact since."]
+  ]
+ },
+ {
+  id:6, name:"Demo Investor 6", seg:"New Prospect", region:"Europe", stage:3, conf:90, mom:"Accelerating",
+  aum:"$999 M", commit:"—", meets:9, last:9,
+  agents:[["Meeting History",90],["Digital Engagement",81],["Relationship Dynamics",72],["External News & Market",63],["Prior Commitments",9]],
+  why:[
+   ["pos","Escalated from analyst to Head of Alternatives within 27 days — strongest seniority jump in the demo cohort."],
+   ["pos","9 meetings completed in the first 45 days of the relationship."],
+   ["pos","Preliminary due diligence questionnaire requested 9 days ago."],
+   ["neu","No commitment history; behavioural model for new prospects applied."]
+  ],
+  risks:[
+   ["md","Fast-moving prospects can stall at legal review; prepare documentation early."]
+  ],
+  plan:[
+   {p:"P1",src:"Analysis",t:"Within 9 days",a:"Fast-track the DDQ response requested 9 days ago — target a 9-day turnaround.",i:"Expected: entry to Stage 4 (Deep Due Diligence)."},
+   {p:"P2",src:"Analysis",t:"Next meeting",a:"Introduce the senior relationship manager now; matching their Head of Alternatives with equivalent seniority accelerates Stage 4 entry.",i:"Expected: seniority signal rises from 72 towards 90."},
+   {p:"P2",src:"Risk",t:"Next 18 days",a:"Prepare legal documentation early — fast-moving prospects most often stall at legal review.",i:"Expected: removes the most likely future blocker in advance."},
+   {p:"P3",src:"Analysis",t:"Next 27 days",a:"Line up reference calls with 2 peer investors of similar profile.",i:"Expected: builds conviction ahead of the commitment discussion."}
+  ],
+  peers:[
+   ["Peer P (New Prospect)","Deep Due Diligence","81%","—"],
+   ["Peer Q (New Prospect)","Closed / Active","90%","189 days"],
+   ["Peer R (New Prospect)","Active Exploration","72%","—"]
+  ],
+  notes:[
+   ["Meeting · 9 days ago","Head of Alternatives joined. Asked for the DDQ and fund terms. Clear intent to formalise evaluation."],
+   ["Call · 27 days ago","Second exploratory call; strategy fit confirmed against their new mandate."]
+  ]
+ }
+];
+
+let selId = 1, fSeg = "all", fStage = "all", fMom = "all", q = "";
+
+function stageClass(s){ return "s"+s; }
+
+function filtered(){
+  return INVESTORS.filter(iv =>
+    (fSeg==="all"||iv.seg===fSeg) &&
+    (fStage==="all"||iv.stage===+fStage) &&
+    (fMom==="all"||iv.mom===fMom) &&
+    (q===""||iv.name.toLowerCase().includes(q))
+  );
+}
+
+function renderList(){
+  const arr = filtered();
+  document.getElementById("cnt").textContent = arr.length;
+  const el = document.getElementById("list");
+  el.innerHTML = arr.map(iv => `
+    <div class="inv-card ${iv.id===selId?"sel":""}" onclick="sel(${iv.id})">
+      <div class="nm">${iv.name}<span class="pill ${stageClass(iv.stage)}">Stage ${iv.stage}</span></div>
+      <div class="meta"><span>${iv.seg} · ${iv.region}</span><span>${iv.conf}% conf.</span></div>
+    </div>`).join("") || `<div class="empty">No investors match the current filters.</div>`;
+}
+
+function momBadge(m){
+  if(m==="Accelerating") return `<span class="tag">▲ Accelerating</span>`;
+  if(m==="Cooling") return `<span class="tag" style="background:var(--red-bg);color:var(--red)">▼ Cooling</span>`;
+  return `<span class="tag grey">◆ Steady</span>`;
+}
+
+function renderMain(){
+  const iv = INVESTORS.find(x=>x.id===selId);
+  const m = document.getElementById("main");
+  if(!iv){ m.innerHTML = `<div class="card empty">Select an investor from the list.</div>`; return; }
+
+  const stagesHtml = STAGES.map((s,i)=>`
+    <div class="stage ${i+1<iv.stage?"done":""} ${i+1===iv.stage?"cur":""}">
+      <div class="bar"></div><div class="sl">${i+1}. ${s}</div>
+    </div>`).join("");
+
+  const agentsHtml = iv.agents.map(([n,v])=>`
+    <div class="abar">
+      <div class="an">${n}</div>
+      <div class="tr"><div class="fl ${v<40?"neg":v<65?"low":""}" style="width:${v}%"></div></div>
+      <div class="av">${v}</div>
+    </div>`).join("");
+
+  const whyHtml = iv.why.map(([t,txt])=>`
+    <li><span class="imp ${t}">${t==="pos"?"+ signal":t==="neg"?"− signal":"neutral"}</span><span>${txt}</span></li>`).join("");
+
+  const riskHtml = iv.risks.map(([lv,txt])=>`
+    <div class="risk ${lv}"><span class="rl">${lv==="hi"?"HIGH":"MED"}</span><span>${txt}</span></div>`).join("")
+    || `<div class="empty">No active risk flags.</div>`;
+
+  const planHtml = iv.plan.map(x=>`
+    <div class="plan-item ${x.src==="Risk"?"risk-driven":""}">
+      <div class="plan-top">
+        <span class="pri ${x.p.toLowerCase()}">${x.p}</span>
+        <span class="src ${x.src==="Risk"?"rk":"an"}">${x.src==="Risk"?"Risk driven":"Analysis driven"}</span>
+        <span class="plan-when">⏱ ${x.t}</span>
+      </div>
+      <div class="plan-act">${x.a}</div>
+      <div class="plan-imp">${x.i}</div>
+    </div>`).join("");
+
+  const peerHtml = iv.peers.map(p=>`<tr><td>${p[0]}</td><td>${p[1]}</td><td><b>${p[2]}</b></td><td>${p[3]}</td></tr>`).join("");
+
+  const noteHtml = iv.notes.map(n=>`<div class="note"><div class="nd">${n[0]}</div>${n[1]}</div>`).join("");
+
+  m.innerHTML = `
+    <div class="head-card">
+      <div class="head-top">
+        <h1>${iv.name}</h1>
+        <span class="tag grey">${iv.seg}</span>
+        <span class="tag grey">${iv.region}</span>
+        ${momBadge(iv.mom)}
+      </div>
+      <div class="head-kpis">
+        <div class="kpi"><div class="v">${iv.aum}</div><div class="l">Estimated AUM (demo)</div></div>
+        <div class="kpi"><div class="v">${iv.commit}</div><div class="l">Committed to date (demo)</div></div>
+        <div class="kpi"><div class="v">${iv.meets}</div><div class="l">Meetings, trailing 12 months</div></div>
+        <div class="kpi"><div class="v">${iv.last} days</div><div class="l">Since last interaction</div></div>
+      </div>
+      <div class="stages">${stagesHtml}</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2><span class="dot"></span>ML Prediction — IESM Stage Classification</h2>
+        <div class="pred">
+          <div class="donut" style="background:conic-gradient(var(--green) ${iv.conf*3.6}deg, var(--mint-2) 0deg)">
+            <div class="hole"><b>${iv.conf}%</b><span>confidence</span></div>
+          </div>
+          <div class="pred-txt">
+            <div class="st">Stage ${iv.stage} — ${STAGES[iv.stage-1]}</div>
+            <p>Classification produced by the ${iv.seg.toLowerCase()} segment model from the aggregated outputs of 5 ML agents. Validated model family accuracy: <b>~92%</b> against historical stage outcomes.</p>
+            <div class="trend">${iv.mom==="Cooling"?"▼":"▲"} Momentum: ${iv.mom}</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2><span class="dot"></span>Agent Signal Scores (0–99)</h2>
+        ${agentsHtml}
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2><span class="dot"></span>Why the Model Thinks So — Feature-Level Reasoning</h2>
+        <ul class="why">${whyHtml}</ul>
+      </div>
+      <div class="card">
+        <h2><span class="dot" style="background:var(--red)"></span>Risk Factors</h2>
+        ${riskHtml}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="plan-head">
+        <h2 style="margin-bottom:0"><span class="dot"></span>IRIS Action Plan — Model Generated Next Steps</h2>
+        <p>Synthesised from the stage classification, the 7 agent signals and the active risk flags for this investor.</p>
+      </div>
+      <div class="plan-grid">${planHtml}</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2><span class="dot"></span>Peer Comparison — Similar Investor Journeys</h2>
+        <table>
+          <tr><th>Peer (anonymised)</th><th>Outcome</th><th>Similarity</th><th>Time to close</th></tr>
+          ${peerHtml}
+        </table>
+      </div>
+      <div class="card">
+        <h2><span class="dot"></span>Meeting Notes — LLM Summaries</h2>
+        ${noteHtml}
+      </div>
+    </div>`;
+}
+
+function sel(id){ selId = id; renderList(); renderMain(); }
+
+document.getElementById("fSeg").onchange = e => { fSeg = e.target.value==="all"?"all":e.target.value; refresh(); };
+document.getElementById("fMom").onchange = e => { fMom = e.target.value==="all"?"all":e.target.value; refresh(); };
+document.getElementById("q").oninput = e => { q = e.target.value.trim().toLowerCase(); refresh(); };
+document.querySelectorAll("#fStage .chip").forEach(c => c.onclick = () => {
+  document.querySelectorAll("#fStage .chip").forEach(x=>x.classList.remove("on"));
+  c.classList.add("on"); fStage = c.dataset.s; refresh();
+});
+
+function refresh(){
+  const arr = filtered();
+  if(!arr.find(x=>x.id===selId)) selId = arr.length?arr[0].id:null;
+  renderList(); renderMain();
+}
+refresh();
+</script>
+</body>
+</html>
